@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Password Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        #password {
+            width: 250px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #copyBtn {
+            background-color: #28a745;
+        }
+        #copyBtn:hover {
+            background-color: #218838;
+        }
+        #strength {
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .slider {
+            width: 200px;
+            margin: 10px auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Secure Password Generator</h2>
+        <input type="text" id="password" readonly>
+        <br>
+        <label for="length">Password Length: <span id="lengthValue">16</span></label>
+        <br>
+        <input type="range" id="length" class="slider" min="12" max="32" value="16" oninput="document.getElementById('lengthValue').textContent = this.value">
+        <br>
+        <div id="strength">Strength: </div>
+        <button onclick="generatePassword()">Generate Password</button>
+        <button id="copyBtn" onclick="copyPassword()">Copy Password</button>
+    </div>
+
+    <script>
+        function generatePassword() {
+            const length = parseInt(document.getElementById('length').value);
+            const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+            const numbers = '0123456789';
+            const symbols = '!@#$%^&*()_+-=[]{}|;:,.<>?';
+            const allChars = uppercase + lowercase + numbers + symbols;
+
+            // Ensure at least one character from each category
+            let password = [
+                uppercase[Math.floor(getSecureRandom() * uppercase.length)],
+                lowercase[Math.floor(getSecureRandom() * lowercase.length)],
+                numbers[Math.floor(getSecureRandom() * numbers.length)],
+                symbols[Math.floor(getSecureRandom() * symbols.length)]
+            ];
+
+            // Fill the rest of the password length
+            for (let i = password.length; i < length; i++) {
+                password.push(allChars[Math.floor(getSecureRandom() * allChars.length)]);
+            }
+
+            // Shuffle the password array
+            for (let i = password.length - 1; i > 0; i--) {
+                const j = Math.floor(getSecureRandom() * (i + 1));
+                [password[i], password[j]] = [password[j], password[i]];
+            }
+
+            const finalPassword = password.join('');
+            document.getElementById('password').value = finalPassword;
+            updateStrengthIndicator(finalPassword);
+        }
+
+        function getSecureRandom() {
+            const array = new Uint32Array(1);
+            crypto.getRandomValues(array);
+            return array[0] / (0xffffffff + 1);
+        }
+
+        function updateStrengthIndicator(password) {
+            const strengthDiv = document.getElementById('strength');
+            let strength = 0;
+            if (password.length >= 16) strength += 2;
+            else if (password.length >= 12) strength += 1;
+            if (/[A-Z]/.test(password)) strength += 1;
+            if (/[a-z]/.test(password)) strength += 1;
+            if (/[0-9]/.test(password)) strength += 1;
+            if (/[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password)) strength += 1;
+
+            if (strength >= 5) {
+                strengthDiv.textContent = 'Strength: Strong';
+                strengthDiv.style.color = 'green';
+            } else if (strength >= 3) {
+                strengthDiv.textContent = 'Strength: Medium';
+                strengthDiv.style.color = 'orange';
+            } else {
+                strengthDiv.textContent = 'Strength: Weak';
+                strengthDiv.style.color = 'red';
+            }
+        }
+
+        function copyPassword() {
+            const passwordField = document.getElementById('password');
+            passwordField.select();
+            try {
+                document.execCommand('copy');
+                alert('Password copied to clipboard!');
+            } catch (err) {
+                alert('Failed to copy password');
+            }
+        }
+
+        // Generate a password when the page loads
+        generatePassword();
+
+        // Update password when slider changes
+        document.getElementById('length').addEventListener('input', generatePassword);
+    </script>
+</body>
+</html>
