@@ -1,151 +1,190 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure Password Generator</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f0f0f0;
-        }
-        .container {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-        #password {
-            width: 250px;
-            padding: 10px;
-            margin: 10px 0;
-            font-size: 16px;
-        }
-        button {
-            padding: 10px 20px;
-            margin: 5px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            background-color: #007bff;
-            color: white;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        #copyBtn {
-            background-color: #28a745;
-        }
-        #copyBtn:hover {
-            background-color: #218838;
-        }
-        #strength {
-            margin: 10px 0;
-            font-weight: bold;
-        }
-        .slider {
-            width: 200px;
-            margin: 10px auto;
-        }
-    </style>
+<meta charset="UTF-8">
+<title>Password Generator</title>
+<style>
+  body {font-family:Arial,sans-serif;max-width:700px;margin:2rem auto;}
+  .section{margin-bottom:1.5rem;}
+  label{display:block;margin-bottom:.5rem;}
+  input[type="number"]{width:60px;}
+  #output{font-family:monospace;background:#f4f4f4;padding:.5rem;border:1px solid #ccc;}
+  button{margin-right:.5rem;}
+  .strength{font-weight:bold;}
+  table{width:100%;border-collapse:collapse;margin-top:.5rem;}
+  th,td{border:1px solid #ddd;padding:.5rem;text-align:left;}
+  .delBtn{background:#e74c3c;color:#fff;border:none;padding:.3rem .6rem;cursor:pointer;}
+</style>
 </head>
 <body>
-    <div class="container">
-        <h2>Secure Password Generator</h2>
-        <input type="text" id="password" readonly>
-        <br>
-        <label for="length">Password Length: <span id="lengthValue">16</span></label>
-        <br>
-        <input type="range" id="length" class="slider" min="12" max="32" value="16" oninput="document.getElementById('lengthValue').textContent = this.value">
-        <br>
-        <div id="strength">Strength: </div>
-        <button onclick="generatePassword()">Generate Password</button>
-        <button id="copyBtn" onclick="copyPassword()">Copy Password</button>
-    </div>
 
-    <script>
-        function generatePassword() {
-            const length = parseInt(document.getElementById('length').value);
-            const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-            const lowercase = 'abcdefghijklmnopqrstuvwxyz';
-            const numbers = '0123456789';
-            const symbols = '!@#$%^&*()_+-=[]{}|;:,.<>?';
-            const allChars = uppercase + lowercase + numbers + symbols;
+<h2>Password Generator</h2>
 
-            // Ensure at least one character from each category
-            let password = [
-                uppercase[Math.floor(getSecureRandom() * uppercase.length)],
-                lowercase[Math.floor(getSecureRandom() * lowercase.length)],
-                numbers[Math.floor(getSecureRandom() * numbers.length)],
-                symbols[Math.floor(getSecureRandom() * symbols.length)]
-            ];
+<div class="section">
+  <label><input type="radio" name="mode" value="words" checked> 3 Random Words</label>
+  <label><input type="radio" name="mode" value="chars"> Pure Random Characters</label>
+</div>
 
-            // Fill the rest of the password length
-            for (let i = password.length; i < length; i++) {
-                password.push(allChars[Math.floor(getSecureRandom() * allChars.length)]);
-            }
+<div class="section" id="char-options" style="display:none;">
+  <label>Length: <input type="number" id="charLength" min="6" value="12"></label>
+</div>
 
-            // Shuffle the password array
-            for (let i = password.length - 1; i > 0; i--) {
-                const j = Math.floor(getSecureRandom() * (i + 1));
-                [password[i], password[j]] = [password[j], password[i]];
-            }
+<div class="section">
+  <button id="generateBtn">Generate</button>
+  <button id="copyBtn" disabled>Copy</button>
+</div>
 
-            const finalPassword = password.join('');
-            document.getElementById('password').value = finalPassword;
-            updateStrengthIndicator(finalPassword);
-        }
+<div class="section">
+  <div id="output"></div>
+  <div>Strength: <span class="strength" id="strength"></span></div>
+</div>
 
-        function getSecureRandom() {
-            const array = new Uint32Array(1);
-            crypto.getRandomValues(array);
-            return array[0] / (0xffffffff + 1);
-        }
+<hr>
 
-        function updateStrengthIndicator(password) {
-            const strengthDiv = document.getElementById('strength');
-            let strength = 0;
-            if (password.length >= 16) strength += 2;
-            else if (password.length >= 12) strength += 1;
-            if (/[A-Z]/.test(password)) strength += 1;
-            if (/[a-z]/.test(password)) strength += 1;
-            if (/[0-9]/.test(password)) strength += 1;
-            if (/[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password)) strength += 1;
+<h3>Saved Passwords</h3>
+<div class="section">
+  <label>Tag: <input type="text" id="tagInput" placeholder="e.g., Email, Bank"></label>
+  <button id="saveBtn" disabled>Save Locally</button>
+</div>
 
-            if (strength >= 5) {
-                strengthDiv.textContent = 'Strength: Strong';
-                strengthDiv.style.color = 'green';
-            } else if (strength >= 3) {
-                strengthDiv.textContent = 'Strength: Medium';
-                strengthDiv.style.color = 'orange';
-            } else {
-                strengthDiv.textContent = 'Strength: Weak';
-                strengthDiv.style.color = 'red';
-            }
-        }
+<table id="savedTable">
+  <thead>
+    <tr><th>Date</th><th>Tag</th><th>Password</th><th>Action</th></tr>
+  </thead>
+  <tbody></tbody>
+</table>
 
-        function copyPassword() {
-            const passwordField = document.getElementById('password');
-            passwordField.select();
-            try {
-                document.execCommand('copy');
-                alert('Password copied to clipboard!');
-            } catch (err) {
-                alert('Failed to copy password');
-            }
-        }
+<script>
+/* ---------- word list (larger sample) ---------- */
+const WORDS = [
+  "apple","river","mountain","sky","forest","cloud","stone","gold","silver",
+  "shadow","light","storm","garden","planet","orbit","candle","bridge","river",
+  "window","mirror","silence","whisper","ember","crystal","tide","breeze"
+];
 
-        // Generate a password when the page loads
-        generatePassword();
+/* ---------- secure random helpers ---------- */
+function getSecureRandomInt(max) {
+  const array = new Uint32Array(1);
+  crypto.getRandomValues(array);
+  return array[0] % max;
+}
+function randomChoice(arr){return arr[getSecureRandomInt(arr.length)];}
+function randomChar(){
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+[]{}|;:,.<>?";
+  return chars[getSecureRandomInt(chars.length)];
+}
 
-        // Update password when slider changes
-        document.getElementById('length').addEventListener('input', generatePassword);
-    </script>
+/* ---------- generation ---------- */
+function generateWords(){return [randomChoice(WORDS),randomChoice(WORDS),randomChoice(WORDS)].join("-");}
+function generateChars(len){let p="";for(let i=0;i<len;i++)p+=randomChar();return p;}
+
+/* ---------- strength estimation (entropy based) ---------- */
+function estimateStrength(pwd){
+  let pool = 0;
+  if(/[a-z]/.test(pwd)) pool += 26;
+  if(/[A-Z]/.test(pwd)) pool += 26;
+  if(/[0-9]/.test(pwd)) pool += 10;
+  if(/[^A-Za-z0-9]/.test(pwd)) pool += 32; // approximate symbol set
+  const bits = Math.log2(pool) * pwd.length;
+  const label = bits < 40 ? "Very Weak"
+            : bits < 60 ? "Weak"
+            : bits < 80 ? "Moderate"
+            : bits < 100 ? "Strong"
+            : "Very Strong";
+  return `${label} (${bits.toFixed(0)} bits)`;
+}
+
+/* ---------- UI handling ---------- */
+const modeRadios = document.getElementsByName('mode');
+const charOptions = document.getElementById('char-options');
+const generateBtn = document.getElementById('generateBtn');
+const copyBtn = document.getElementById('copyBtn');
+const saveBtn = document.getElementById('saveBtn');
+const outputDiv = document.getElementById('output');
+const strengthSpan = document.getElementById('strength');
+const tagInput = document.getElementById('tagInput');
+const tbody = document.querySelector('#savedTable tbody');
+
+function getMode(){return [...modeRadios].find(r=>r.checked).value;}
+function updateUI(){charOptions.style.display = getMode()==='chars' ? 'block' : 'none';}
+modeRadios.forEach(r=>r.addEventListener('change',updateUI));
+
+generateBtn.addEventListener('click',()=>{
+  const pwd = getMode()==='words' ? generateWords()
+                                   : generateChars(parseInt(document.getElementById('charLength').value,10));
+  outputDiv.textContent = pwd;
+  strengthSpan.textContent = estimateStrength(pwd);
+  copyBtn.disabled = false;
+  saveBtn.disabled = false;
+});
+
+copyBtn.addEventListener('click',()=>{
+  navigator.clipboard.writeText(outputDiv.textContent).then(()=>{
+    copyBtn.textContent='Copied!';
+    setTimeout(()=>copyBtn.textContent='Copy',1500);
+  });
+});
+
+/* ---------- safe insertion & delete ---------- */
+function escapeText(text){
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+function addRow(item){
+  const tr = document.createElement('tr');
+
+  const tdDate = document.createElement('td');
+  tdDate.textContent = item.date;
+  const tdTag = document.createElement('td');
+  tdTag.textContent = item.tag;
+  const tdPwd = document.createElement('td');
+  tdPwd.textContent = item.pwd;
+  const tdAct = document.createElement('td');
+  const delBtn = document.createElement('button');
+  delBtn.className = 'delBtn';
+  delBtn.textContent = 'Delete';
+  delBtn.addEventListener('click',()=>{removeEntry(item,tr);});
+  tdAct.appendChild(delBtn);
+
+  tr.append(tdDate, tdTag, tdPwd, tdAct);
+  tbody.appendChild(tr);
+}
+function removeEntry(item,row){
+  try{
+    const saved = JSON.parse(localStorage.getItem('savedPasswords')||'[]');
+    const filtered = saved.filter(i=> !(i.date===item.date && i.tag===item.tag && i.pwd===item.pwd));
+    localStorage.setItem('savedPasswords',JSON.stringify(filtered));
+  }catch(e){console.error(e);}
+  row.remove();
+}
+
+/* ---------- save ---------- */
+saveBtn.addEventListener('click',()=>{
+  const pwd = outputDiv.textContent;
+  const rawTag = tagInput.value.trim() || 'Untitled';
+  const tag = rawTag; // stored as plain text; no HTML allowed
+  const date = new Date().toLocaleString();
+  const entry = {date, tag, pwd};
+
+  addRow(entry);
+  try{
+    const saved = JSON.parse(localStorage.getItem('savedPasswords')||'[]');
+    saved.push(entry);
+    localStorage.setItem('savedPasswords',JSON.stringify(saved));
+  }catch(e){console.error(e);}
+  tagInput.value='';
+  saveBtn.disabled=true;
+});
+
+/* ---------- load on start ---------- */
+window.addEventListener('load',()=>{
+  try{
+    const saved = JSON.parse(localStorage.getItem('savedPasswords')||'[]');
+    saved.forEach(addRow);
+  }catch(e){console.error(e);}
+});
+</script>
+
 </body>
 </html>
